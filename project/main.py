@@ -44,7 +44,7 @@ logging.info('*' * len(log_str))
 logging.info('')
 
 # get the file name
-excel_file = "project/file.xlsx"
+excel_file = "file.xlsx"
 
 dashboard = meraki.DashboardAPI(api_key=credentials.meraki_api_key, print_console=False,output_log=False)
 
@@ -98,24 +98,28 @@ for i in range(1, sheet.nrows):
 for row in ap_list:
     # update the device's tags
     print(row)
+    if row["vlan"] == "None":
+        row["vlan"] = None
+    else:
+        row["vlan"] = int(row["vlan"])
 
-    wan_settings = {
-                        "wan1": {
-                            "usingStaticIp": "true",
-                            "staticIp": row["staticIp"],
-                            "usingStaticIp": "true",
-                            "staticSubnetMask": row["staticSubnetMask"],
-                            "staticGatewayIp": row["staticGatewayIp"],
-                            "staticDns": row["staticDns"],
-                            "vlan": str(row["vlan"])
-                        }
-                    }
+    
+    wan1={
+            'wanEnabled': 'enabled', 
+            'usingStaticIp': True, 
+            'staticIp': row["staticIp"], 
+            'staticSubnetMask': row["staticSubnetMask"], 
+            'staticGatewayIp': row["staticGatewayIp"], 
+            'staticDns': [row["staticDns"]], 
+            'vlan': row["vlan"]
+        } 
 
     try:
-        resp = dashboard.devices.updateDeviceManagementInterface(serial=row["serial"],wan1=wan_settings)
+        resp = dashboard.devices.updateDeviceManagementInterface(serial=row["serial"],wan1=wan1)
         print(resp)
+        logging.info(resp)
 
         rb = dashboard.devices.rebootDevice(serial=row["serial"])
     except Exception as e:
+        logging.error('e')
         print(e)
-        print(resp)
